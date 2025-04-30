@@ -1,3 +1,5 @@
+# .github/workflows/test.yml
+
 name: Odoo CI - Core and Custom Module Tests
 
 on:
@@ -22,8 +24,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        volumes:
-          - ./.github/init.sql:/docker-entrypoint-initdb.d/init.sql
 
     steps:
       - name: Checkout code (with submodules)
@@ -41,27 +41,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git gcc g++ libxml2-dev libxslt1-dev zlib1g-dev \
             libldap2-dev libsasl2-dev libpq-dev libjpeg-dev liblcms2-dev \
-            libxrender1 libxext6 libx11-6 xfonts-75dpi xfonts-base wkhtmltopdf python3-dev \
-            libev-dev
+            libxrender1 libxext6 libx11-6 xfonts-75dpi xfonts-base wkhtmltopdf python3-dev libev-dev
 
-      - name: Install Python dependencies
+      - name: Install Python build tools and compatible Cython
         run: |
-          pip install -U pip
-          pip install wheel coverage
+          pip install -U pip setuptools wheel
+          pip install Cython==0.29.33
 
       - name: Clone Odoo 18
         run: |
           git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
 
-      - name: Install build tools and Cython
-        run: |
-          pip install -U pip setuptools wheel Cython
-          
       - name: Install Odoo Python dependencies
         run: |
-          sudo apt-get install -y libev-dev
           pip install -r odoo/requirements.txt
-                
+
       - name: Run Odoo Core Tests
         run: |
           ./odoo/odoo-bin --addons-path=odoo/odoo/addons \
@@ -86,8 +80,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        volumes:
-          - ./.github/init.sql:/docker-entrypoint-initdb.d/init.sql
 
     steps:
       - name: Checkout code (with submodules)
@@ -105,27 +97,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git gcc g++ libxml2-dev libxslt1-dev zlib1g-dev \
             libldap2-dev libsasl2-dev libpq-dev libjpeg-dev liblcms2-dev \
-            libxrender1 libxext6 libx11-6 xfonts-75dpi xfonts-base wkhtmltopdf python3-dev \
-            libev-dev
+            libxrender1 libxext6 libx11-6 xfonts-75dpi xfonts-base wkhtmltopdf python3-dev libev-dev
 
-      - name: Install Python dependencies
+      - name: Install Python build tools and compatible Cython
         run: |
-          pip install -U pip
-          pip install wheel coverage
+          pip install -U pip setuptools wheel
+          pip install Cython==0.29.33
 
       - name: Clone Odoo 18
         run: |
           git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
 
-      - name: Install build tools and Cython
-        run: |
-          pip install -U pip setuptools wheel Cython
-          
       - name: Install Odoo Python dependencies
         run: |
-          sudo apt-get install -y libev-dev
           pip install -r odoo/requirements.txt
-    
+
       - name: Detect changed modules and their dependencies
         id: detect
         run: |
@@ -133,7 +119,6 @@ jobs:
           MODIFIED=$(git diff --name-only origin/main...HEAD | grep -oE '^repos/[^/]+' | sort -u | uniq | sed 's|repos/||')
           echo "Modules changed: $MODIFIED"
           echo "MODULES=$MODIFIED" >> $GITHUB_ENV
-          # Optional: collect dependencies from __manifest__.py if needed
 
       - name: Run Tests for Changed Modules
         if: env.MODULES != ''

@@ -1,2 +1,0 @@
-CREATE ROLE root WITH LOGIN PASSWORD 'root_password';
-ALTER ROLE root CREATEDB;
