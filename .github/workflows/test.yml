@@ -8,7 +8,8 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+
     services:
       postgres:
         image: postgres:13
@@ -25,8 +26,10 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout code
+      - name: Checkout code (with submodules)
         uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -40,9 +43,9 @@ jobs:
 
       - name: Run all Odoo tests and collect coverage
         run: |
-          coverage run -m unittest discover -s addons
+          coverage run -m unittest discover -s . -p "test_*.py"
           coverage xml
-
+        
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
