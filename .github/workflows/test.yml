@@ -52,10 +52,15 @@ jobs:
         run: |
           git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
 
+      - name: Install build tools and Cython
+        run: |
+          pip install -U pip setuptools wheel Cython
+        
       - name: Install Odoo Python dependencies
         run: |
+          sudo apt-get install -y libev-dev
           pip install -r odoo/requirements.txt
-        
+                
       - name: Run Odoo Core Tests
         run: |
           ./odoo/odoo-bin --addons-path=odoo/odoo/addons \
@@ -108,8 +113,17 @@ jobs:
         run: |
           git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
 
+      - name: Install build tools and Cython
+        run: |
+          pip install -U pip setuptools wheel Cython
+
+      - name: Install build tools and Cython
+        run: |
+          pip install -U pip setuptools wheel Cython
+          
       - name: Install Odoo Python dependencies
         run: |
+          sudo apt-get install -y libev-dev
           pip install -r odoo/requirements.txt
     
       - name: Detect changed modules and their dependencies
