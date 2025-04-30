@@ -51,11 +51,12 @@ jobs:
         run: |
           pip install -r odoo/requirements.txt
 
-      - name: Run Odoo Core Tests
+      - name: Run Odoo Core Tests Only
         run: |
           ./odoo/odoo-bin --addons-path=odoo/odoo/addons \
             --db_host=localhost --db_port=5432 --db_user=odoo --db_password=odoo \
-            --test-enable --stop-after-init --log-level=test
+            --test-enable --stop-after-init --log-level=test \
+            --modules=$(ls odoo/odoo/addons | tr '\n' ',' | sed 's/,$//')
 
   custom-module-tests:
     name: Run Custom Module Tests
@@ -111,12 +112,15 @@ jobs:
           echo "MODULES=$MODIFIED" >> $GITHUB_ENV
 
       - name: Run Tests for Changed Modules
-        if: env.MODULES != ''
         run: |
-          ./odoo/odoo-bin --addons-path=odoo/odoo/addons,repos \
-            --db_host=localhost --db_port=5432 --db_user=odoo --db_password=odoo \
-            --test-enable --stop-after-init --log-level=test \
-            --modules=$MODULES
+          if [ -n "$MODULES" ]; then \
+            ./odoo/odoo-bin --addons-path=odoo/odoo/addons,repos \
+              --db_host=localhost --db_port=5432 --db_user=odoo --db_password=odoo \
+              --test-enable --stop-after-init --log-level=test \
+              --modules=$MODULES; \
+          else \
+            echo "No changed modules to test."; \
+          fi
 
       - name: Generate Coverage Report
         if: env.MODULES != ''
