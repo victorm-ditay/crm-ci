@@ -9,7 +9,7 @@ on:
 jobs:
   odoo-core-tests:
     name: Run Odoo Core Tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:13
@@ -34,7 +34,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Install system dependencies
         run: |
@@ -42,15 +42,6 @@ jobs:
           sudo apt-get install -y git gcc g++ libxml2-dev libxslt1-dev zlib1g-dev \
             libldap2-dev libsasl2-dev libpq-dev libjpeg-dev liblcms2-dev \
             libxrender1 libxext6 libx11-6 xfonts-75dpi xfonts-base wkhtmltopdf python3-dev libev-dev
-
-      - name: Install Python build tools and compatible Cython
-        run: |
-          pip install -U pip setuptools wheel
-          pip install Cython==0.29.33
-
-      - name: Pre-install compatible gevent wheel
-        run: |
-          pip install 'gevent==21.8.0' --only-binary :all:
 
       - name: Clone Odoo 18
         run: |
@@ -68,7 +59,7 @@ jobs:
 
   custom-module-tests:
     name: Run Custom Module Tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: odoo-core-tests
     services:
       postgres:
@@ -94,7 +85,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Install system dependencies
         run: |
@@ -102,15 +93,6 @@ jobs:
           sudo apt-get install -y git gcc g++ libxml2-dev libxslt1-dev zlib1g-dev \
             libldap2-dev libsasl2-dev libpq-dev libjpeg-dev liblcms2-dev \
             libxrender1 libxext6 libx11-6 xfonts-75dpi xfonts-base wkhtmltopdf python3-dev libev-dev
-
-      - name: Install Python build tools and compatible Cython
-        run: |
-          pip install -U pip setuptools wheel
-          pip install Cython==0.29.33
-
-      - name: Pre-install compatible gevent wheel
-        run: |
-          pip install 'gevent==21.8.0' --only-binary :all:
 
       - name: Clone Odoo 18
         run: |
