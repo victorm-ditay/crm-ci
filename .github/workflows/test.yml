@@ -52,6 +52,10 @@ jobs:
         run: |
           git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
 
+      - name: Install Odoo Python dependencies
+        run: |
+          pip install -r odoo/requirements.txt
+        
       - name: Run Odoo Core Tests
         run: |
           ./odoo/odoo-bin --addons-path=odoo/odoo/addons \
@@ -104,6 +108,10 @@ jobs:
         run: |
           git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
 
+      - name: Install Odoo Python dependencies
+        run: |
+          pip install -r odoo/requirements.txt
+    
       - name: Detect changed modules and their dependencies
         id: detect
         run: |
