@@ -48,6 +48,10 @@ jobs:
           pip install -U pip setuptools wheel
           pip install Cython==0.29.33
 
+      - name: Pre-install compatible gevent wheel
+        run: |
+          pip install 'gevent==21.8.0' --only-binary :all:
+
       - name: Clone Odoo 18
         run: |
           git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
@@ -103,6 +107,10 @@ jobs:
         run: |
           pip install -U pip setuptools wheel
           pip install Cython==0.29.33
+
+      - name: Pre-install compatible gevent wheel
+        run: |
+          pip install 'gevent==21.8.0' --only-binary :all:
 
       - name: Clone Odoo 18
         run: |
