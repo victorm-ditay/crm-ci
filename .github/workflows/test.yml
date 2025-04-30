@@ -45,7 +45,7 @@ jobs:
 
       - name: Clone Odoo 18
         run: |
-          git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
+          git clone https://github.com/odoo/odoo.git -b 18.0
 
       - name: Install Odoo Python dependencies
         run: |
