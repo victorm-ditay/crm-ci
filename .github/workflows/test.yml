@@ -1,6 +1,6 @@
 # .github/workflows/test.yml
 
-name: Test con imagen Odoo CE
+name: Test con docker run de Odoo CE
 
 on:
   push:
@@ -9,9 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/victorm-ditay/odoo-ce:18.0
-      
+
     services:
       postgres:
         image: postgres:13
@@ -35,10 +33,14 @@ jobs:
           MODS=$(manifestoo -d repos list --installable)
           echo "modules=$(echo $MODS | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
 
-      - name: Ejecutar tests con Odoo
+      - name: Ejecutar tests de Odoo en contenedor
         run: |
-          odoo \
-            --addons-path=/usr/lib/python3/dist-packages/odoo/addons,repos \
-            --db_host=localhost --db_user=odoo --db_password=odoo \
-            --test-enable --stop-after-init \
-            --modules=${{ steps.manifestoo.outputs.modules }}
+          docker run --rm \
+            --network=host \
+            -v ${{ github.workspace }}/repos:/mnt/repos \
+            ghcr.io/victorm-ditay/odoo-ce:18.0 \
+            odoo \
+              --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/repos \
+              --db_host=localhost --db_user=odoo --db_password=odoo \
+              --test-enable --stop-after-init \
+              --modules=${{ steps.manifestoo.outputs.modules }}
