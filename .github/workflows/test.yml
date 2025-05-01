@@ -25,11 +25,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Instalar y ejecutar manifestoo
-        id: manifestoo
-        run: |
-          pip install manifestoo-core
+  id: manifestoo
+  run: |
+    pip install manifestoo-core
     MODS=$(python -m manifestoo_core -d repos list --installable)
-          echo "modules=$(echo $MODS | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
+    echo "modules=$(echo $MODS | tr '
+' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
 
       - name: Ejecutar tests de Odoo en contenedor
         run: |
