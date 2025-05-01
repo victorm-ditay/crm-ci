@@ -29,7 +29,9 @@ jobs:
   run: |
     pip install manifestoo-core
     MODS=$(python -m manifestoo_core -d repos list --installable)
-    echo "modules=$(echo $MODS | tr '
+    MOD_LIST=$(echo "$MODS" | tr '
+' ',' | sed 's/,$//')
+    echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
 ' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
 
       - name: Ejecutar tests de Odoo en contenedor
