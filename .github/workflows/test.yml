@@ -24,12 +24,10 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Instalar manifestoo
-        run: pip install manifestoo-core
-
-      - name: Detectar módulos instalables
+      - name: Instalar y ejecutar manifestoo
         id: manifestoo
         run: |
+          pip install manifestoo-core
           MODS=$(manifestoo -d repos list --installable)
           echo "modules=$(echo $MODS | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
 
@@ -44,3 +42,14 @@ jobs:
               --db_host=localhost --db_user=odoo --db_password=odoo \
               --test-enable --stop-after-init \
               --modules=${{ steps.manifestoo.outputs.modules }}
+
+      - name: Generar cobertura de tests del repositorio
+        run: |
+          pip install coverage
+          coverage run -m unittest discover -s repos
+          coverage xml
+
+      - name: Subir cobertura a Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
