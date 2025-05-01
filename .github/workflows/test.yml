@@ -1,15 +1,20 @@
 # .github/workflows/test.yml
 
-name: Odoo CI - Core and Custom Module Tests
+name: Test con imagen Odoo CE
 
 on:
   push:
   pull_request:
 
 jobs:
-  odoo-core-tests:
-    name: Run Odoo Core Tests
-    runs-on: ubuntu-24.04
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/victorm-ditay/odoo-ce:18.0
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
     services:
       postgres:
         image: postgres:13
@@ -19,116 +24,24 @@ jobs:
           POSTGRES_DB: odoo
         ports:
           - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
-      - name: Checkout code (with submodules)
-        uses: actions/checkout@v3
-        with:
-          submodules: true
+      - name: Checkout código
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
+      - name: Instalar manifestoo
+        run: pip install manifestoo-core
 
-      - name: Install system dependencies
+      - name: Detectar módulos instalables
+        id: manifestoo
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git gcc g++ libxml2-dev libxslt1-dev zlib1g-dev \
-            libldap2-dev libsasl2-dev libpq-dev libjpeg-dev liblcms2-dev \
-            libxrender1 libxext6 libx11-6 xfonts-75dpi xfonts-base wkhtmltopdf python3-dev libev-dev
+          MODS=$(manifestoo -d repos list --installable)
+          echo "modules=$(echo $MODS | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
 
-      - name: Clone Odoo 18
+      - name: Ejecutar tests con Odoo
         run: |
-          git clone https://github.com/odoo/odoo.git -b 18.0
-
-      - name: Install Odoo Python dependencies
-        run: |
-          pip install -r odoo/requirements.txt
-
-      - name: Run Odoo Core Tests Only
-        run: |
-          ./odoo/odoo-bin --addons-path=odoo/odoo/addons,odoo/addons \
-            --db_host=localhost --db_port=5432 --db_user=odoo --db_password=odoo \
-            --test-enable --stop-after-init --log-level=test \
-            --modules=$(ls odoo/odoo/addons | tr '\n' ',' | sed 's/,$//')
-
-  custom-module-tests:
-    name: Run Custom Module Tests
-    runs-on: ubuntu-24.04
-    needs: odoo-core-tests
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: odoo
-          POSTGRES_PASSWORD: odoo
-          POSTGRES_DB: odoo
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Checkout code (with submodules)
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git gcc g++ libxml2-dev libxslt1-dev zlib1g-dev \
-            libldap2-dev libsasl2-dev libpq-dev libjpeg-dev liblcms2-dev \
-            libxrender1 libxext6 libx11-6 xfonts-75dpi xfonts-base wkhtmltopdf python3-dev libev-dev
-
-      - name: Clone Odoo 18
-        run: |
-          git clone https://github.com/odoo/odoo.git -b 18.0 --depth=1
-
-      - name: Install Odoo Python dependencies
-        run: |
-          pip install -r odoo/requirements.txt
-
-      - name: Detect changed modules and their dependencies
-        id: detect
-        run: |
-          git fetch origin main
-          MODIFIED=$(git diff --name-only origin/main...HEAD | grep -oE '^repos/[^/]+' | sort -u | uniq | sed 's|repos/||')
-          echo "Modules changed: $MODIFIED"
-          echo "MODULES=$MODIFIED" >> $GITHUB_ENV
-
-      - name: Run Tests for Changed Modules
-        run: |
-          if [ -n "$MODULES" ]; then \
-            ./odoo/odoo-bin --addons-path=odoo/odoo/addons,repos \
-              --db_host=localhost --db_port=5432 --db_user=odoo --db_password=odoo \
-              --test-enable --stop-after-init --log-level=test \
-              --modules=$MODULES; \
-          else \
-            echo "No changed modules to test."; \
-          fi
-
-      - name: Generate Coverage Report
-        if: env.MODULES != ''
-        run: |
-          coverage xml
-
-      - name: Upload to Codecov
-        if: env.MODULES != ''
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          odoo \
+            --addons-path=/usr/lib/python3/dist-packages/odoo/addons,repos \
+            --db_host=localhost --db_user=odoo --db_password=odoo \
+            --test-enable --stop-after-init \
+            --modules=${{ steps.manifestoo.outputs.modules }}
