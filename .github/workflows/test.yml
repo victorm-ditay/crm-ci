@@ -11,10 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/victorm-ditay/odoo-ce:18.0
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GHCR_TOKEN }}
-
+      
     services:
       postgres:
         image: postgres:13
