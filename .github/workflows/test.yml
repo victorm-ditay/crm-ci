@@ -23,15 +23,15 @@ jobs:
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
-
+      
       - name: Instalar y ejecutar manifestoo
         id: manifestoo
         run: |
           pip install --user manifestoo-core
-          # Add ~/.local/bin to PATH
-          export PATH=$HOME/.local/bin:$PATH
-          MODS=$(manifestoo -d repos list --installable)
-          MOD_LIST=$(echo "$MODS" | tr '\n' ',' | sed 's/,$//')
+          # Explicitly add ~/.local/bin to PATH and verify its inclusion
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          manifestoo -d repos list --installable > modules_list.txt
+          MOD_LIST=$(cat modules_list.txt | tr '\n' ',' | sed 's/,$//')
           echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
 
       - name: Ejecutar tests de Odoo en contenedor
