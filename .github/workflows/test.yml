@@ -27,8 +27,8 @@ jobs:
       - name: Instalar y ejecutar manifestoo
         id: manifestoo
         run: |
-          pip install manifestoo-core
-          MODS=$(python -m manifestoo_core -d repos list --installable)
+          pip install --user manifestoo-core
+          MODS=$(~/.local/bin/manifestoo -d repos list --installable)
           MOD_LIST=$(echo "$MODS" | tr '\n' ',' | sed 's/,$//')
           echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
 
