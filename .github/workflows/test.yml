@@ -28,7 +28,9 @@ jobs:
         id: manifestoo
         run: |
           pip install --user manifestoo-core
-          MODS=$(~/.local/bin/manifestoo -d repos list --installable)
+          # Add ~/.local/bin to PATH
+          export PATH=$HOME/.local/bin:$PATH
+          MODS=$(manifestoo -d repos list --installable)
           MOD_LIST=$(echo "$MODS" | tr '\n' ',' | sed 's/,$//')
           echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
 
