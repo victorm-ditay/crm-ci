@@ -29,6 +29,28 @@ jobs:
         run: |
           pip install manifestoo-core
           MODS=$(python -m manifestoo_core -d repos list --installable)
-          MOD_LIST=$(echo "$MODS" | tr '
-' ',' | sed 's/,$//')
+          MOD_LIST=$(echo "$MODS" | tr '\n' ',' | sed 's/,$//')
           echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
+
+      - name: Ejecutar tests de Odoo en contenedor
+        run: |
+          docker run --rm \
+            --network=host \
+            -v ${{ github.workspace }}/repos:/mnt/repos \
+            ghcr.io/victorm-ditay/odoo-ce:18.0 \
+            odoo \
+              --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/repos \
+              --db_host=localhost --db_user=odoo --db_password=odoo \
+              --test-enable --stop-after-init \
+              --modules=${{ steps.manifestoo.outputs.modules }}
+
+      - name: Generar cobertura de tests del repositorio
+        run: |
+          pip install coverage
+          coverage run -m unittest discover -s repos
+          coverage xml
+
+      - name: Subir cobertura a Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
