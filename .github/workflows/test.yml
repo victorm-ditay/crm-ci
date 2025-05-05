@@ -36,7 +36,7 @@ jobs:
         id: detect-modules
         run: |
           MOD_LIST=$(find . -maxdepth 2 -name __manifest__.py \
-            -exec grep -l '"installable" *: *true' {} \; \
+            -exec grep -l '"installable"\s*:\s*(true|True)' {} \; \
             | sed 's|/__manifest__.py||' | xargs -n1 basename \
             | tr '\n' ',' | sed 's/,$//')
           echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
