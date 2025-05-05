@@ -24,12 +24,21 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
       
-      - name: Instalar y ejecutar manifestoo
-        id: manifestoo
+      # - name: Instalar y ejecutar manifestoo
+      #   id: manifestoo
+      #   run: |
+      #     pip install --user manifestoo-core
+      #     ~/.local/bin/manifestoo -d repos list --installable > modules_list.txt
+      #     MOD_LIST=$(cat modules_list.txt | tr '\n' ',' | sed 's/,$//')
+      #     echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
+
+      - name: Detectar módulos instalables en raíz
+        id: detect-modules
         run: |
-          pip install --user manifestoo-core
-          ~/.local/bin/manifestoo -d repos list --installable > modules_list.txt
-          MOD_LIST=$(cat modules_list.txt | tr '\n' ',' | sed 's/,$//')
+          MOD_LIST=$(find . -maxdepth 2 -name __manifest__.py \
+            -exec grep -l '"installable" *: *true' {} \; \
+            | sed 's|/__manifest__.py||' | xargs -n1 basename \
+            | tr '\n' ',' | sed 's/,$//')
           echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
 
       - name: Ejecutar tests de Odoo en contenedor
@@ -42,8 +51,8 @@ jobs:
               --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/repos \
               --db_host=localhost --db_user=odoo --db_password=odoo \
               --test-enable --stop-after-init \
-              --modules=${{ steps.manifestoo.outputs.modules }}
-
+              --modules=if: ${{ steps.detect-modules.outputs.modules != '' }}
+              
       - name: Generar cobertura de tests del repositorio
         run: |
           pip install coverage
