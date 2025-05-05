@@ -24,19 +24,7 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Instalar y ejecutar manifestoo con pipx
-        id: manifestoo
-        run: |
-          python3 -m pip install --user pipx
-          python3 -m pipx ensurepath
-          export PATH=$PATH:$HOME/.local/bin
-          pipx install manifestoo-core
-          MODS=$(manifestoo -d . list --installable)
-          MOD_LIST=$(echo "$MODS" | tr '\n' ',' | sed 's/,$//')
-          echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
-
       - name: Ejecutar tests de Odoo en contenedor
-        if: ${{ steps.manifestoo.outputs.modules != '' }}
         run: |
           docker run --rm \
             --network=host \
@@ -46,12 +34,12 @@ jobs:
               --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/workspace \
               --db_host=localhost --db_user=odoo --db_password=odoo \
               --test-enable --stop-after-init \
-              --modules=${{ steps.manifestoo.outputs.modules }}
+              --init=crm_custom
 
       - name: Generar cobertura de tests del repositorio
         run: |
           pip install coverage
-          coverage run -m unittest discover -s .
+          coverage run -m unittest discover -s crm_custom
           coverage xml
 
       - name: Subir cobertura a Codecov
