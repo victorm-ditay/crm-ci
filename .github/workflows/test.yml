@@ -23,40 +23,35 @@ jobs:
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
-      
-      # - name: Instalar y ejecutar manifestoo
-      #   id: manifestoo
-      #   run: |
-      #     pip install --user manifestoo-core
-      #     ~/.local/bin/manifestoo -d repos list --installable > modules_list.txt
-      #     MOD_LIST=$(cat modules_list.txt | tr '\n' ',' | sed 's/,$//')
-      #     echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
 
-      - name: Detectar módulos instalables en raíz
-        id: detect-modules
+      - name: Instalar y ejecutar manifestoo con pipx
+        id: manifestoo
         run: |
-          MOD_LIST=$(find . -maxdepth 2 -name __manifest__.py \
-            -exec grep -l '"installable"\s*:\s*(true|True)' {} \; \
-            | sed 's|/__manifest__.py||' | xargs -n1 basename \
-            | tr '\n' ',' | sed 's/,$//')
+          python3 -m pip install --user pipx
+          python3 -m pipx ensurepath
+          export PATH=$PATH:$HOME/.local/bin
+          pipx install manifestoo-core
+          MODS=$(manifestoo -d . list --installable)
+          MOD_LIST=$(echo "$MODS" | tr '\n' ',' | sed 's/,$//')
           echo "modules=$MOD_LIST" >> $GITHUB_OUTPUT
 
       - name: Ejecutar tests de Odoo en contenedor
+        if: ${{ steps.manifestoo.outputs.modules != '' }}
         run: |
           docker run --rm \
             --network=host \
-            -v ${{ github.workspace }}/repos:/mnt/repos \
+            -v ${{ github.workspace }}:/mnt/workspace \
             ghcr.io/victorm-ditay/odoo-ce:18.0 \
             odoo \
-              --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/repos \
+              --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/workspace \
               --db_host=localhost --db_user=odoo --db_password=odoo \
               --test-enable --stop-after-init \
-              --modules=if: ${{ steps.detect-modules.outputs.modules != '' }}
-              
+              --modules=${{ steps.manifestoo.outputs.modules }}
+
       - name: Generar cobertura de tests del repositorio
         run: |
           pip install coverage
-          coverage run -m unittest discover -s repos
+          coverage run -m unittest discover -s .
           coverage xml
 
       - name: Subir cobertura a Codecov
